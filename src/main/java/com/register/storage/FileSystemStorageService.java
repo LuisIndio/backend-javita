@@ -1,5 +1,6 @@
 package com.register.storage;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileSystemStorageService implements StorageService {
 
     private final Path rootLocation;
+    private final static String UPLOADS_FOLDER = "uploads";
 
     @Autowired
     public FileSystemStorageService(StorageProperties properties) {
@@ -34,12 +36,14 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public String store(MultipartFile file) {
+        String filename = null;
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file.");
             }
+            filename = Objects.requireNonNull(file.getOriginalFilename());
             Path destinationFile = this.rootLocation.resolve(
-                            Paths.get(Objects.requireNonNull(file.getOriginalFilename())))
+                    Paths.get(filename))
                     .normalize().toAbsolutePath();
             if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
                 // This is a security check
@@ -53,7 +57,7 @@ public class FileSystemStorageService implements StorageService {
         } catch (IOException e) {
             throw new StorageException("Failed to store file.", e);
         }
-        return null;
+        return filename;
     }
 
     @Override
@@ -94,6 +98,24 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public void deleteAll() {
         FileSystemUtils.deleteRecursively(rootLocation.toFile());
+    }
+
+    @Override
+    public boolean delete(String filename) {
+        if (filename != null && filename.length() > 0) {
+            Path pathPhotoBeforeDelete = getPath(filename);
+            File filePhotoBeforeDelete = pathPhotoBeforeDelete.toFile();
+            if (filePhotoBeforeDelete.exists() && filePhotoBeforeDelete.canRead()) {
+                filePhotoBeforeDelete.delete();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public Path getPath(String filename) {
+        return Paths.get(UPLOADS_FOLDER).resolve(filename).toAbsolutePath();
     }
 
     @Override

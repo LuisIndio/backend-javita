@@ -19,6 +19,6 @@ public class Student {
     private LocalDate birthDate;
     private LocalDate registrationDate;
     private LocalDate registrationEndDate;
-    private String imagePath;
+    private String imagePath = "default.jpg";
 
 }
