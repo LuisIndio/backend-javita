@@ -35,7 +35,7 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public String store(MultipartFile file) {
-        String filename = null;
+        String filename;
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file.");
@@ -101,12 +101,15 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public boolean delete(String filename) {
-        if (filename != null && filename.length() > 0) {
+        if (filename != null && !filename.isEmpty()) {
             Path pathPhotoBeforeDelete = getPath(filename);
             File filePhotoBeforeDelete = pathPhotoBeforeDelete.toFile();
             if (filePhotoBeforeDelete.exists() && filePhotoBeforeDelete.canRead()) {
-                filePhotoBeforeDelete.delete();
-                return true;
+                boolean deleted = filePhotoBeforeDelete.delete();
+                if (!deleted) {
+                    System.err.println("Failed to delete file: " + filename);
+                }
+                return deleted;
             }
         }
         return false;
