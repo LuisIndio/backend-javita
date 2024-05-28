@@ -28,9 +28,9 @@ public class StudentController {
     }
 
     private Student getStudentOrThrow(Long id) {
-        return studentRepository.findById(id).orElseThrow(() -> {
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found");
-        });
+        return studentRepository.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found")
+        );
     }
 
     @GetMapping("/list")
@@ -58,7 +58,7 @@ public class StudentController {
         Student student = getStudentOrThrow(id);
 
         if (!file.isEmpty()) {
-            String fileName = null;
+            String fileName;
             try {
                 fileName = storageService.store(file);
             } catch (Exception e) {
