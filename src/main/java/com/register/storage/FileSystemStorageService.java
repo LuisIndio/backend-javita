@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileSystemStorageService implements StorageService {
 
     private final Path rootLocation;
-    private final static String UPLOADS_FOLDER = "uploads";
 
     @Autowired
     public FileSystemStorageService(StorageProperties properties) {
@@ -43,7 +42,7 @@ public class FileSystemStorageService implements StorageService {
             }
             filename = Objects.requireNonNull(file.getOriginalFilename());
             Path destinationFile = this.rootLocation.resolve(
-                    Paths.get(filename))
+                            Paths.get(filename))
                     .normalize().toAbsolutePath();
             if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
                 // This is a security check
@@ -115,7 +114,7 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public Path getPath(String filename) {
-        return Paths.get(UPLOADS_FOLDER).resolve(filename).toAbsolutePath();
+        return rootLocation.resolve(filename).toAbsolutePath();
     }
 
     @Override

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,12 @@ public class StudentController {
 
     public StudentController(StorageService storageService) {
         this.storageService = storageService;
+    }
+
+    private Student getStudentOrThrow(Long id) {
+        return studentRepository.findById(id).orElseThrow(() -> {
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found");
+        });
     }
 
     @GetMapping("/list")
@@ -48,12 +55,7 @@ public class StudentController {
     @PostMapping("/students/upload")
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file, @RequestParam("id") Long id) {
         Map<String, Object> response = new HashMap<>();
-        Student student = studentRepository.findById(id).orElse(null);
-
-        if (student == null) {
-            response.put("message", "Student not found");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
+        Student student = getStudentOrThrow(id);
 
         if (!file.isEmpty()) {
             String fileName = null;
@@ -66,31 +68,38 @@ public class StudentController {
             }
 
             String namePhotoBeforeDelete = student.getImagePath();
-            if (namePhotoBeforeDelete != null) {
+            if (namePhotoBeforeDelete != null && !namePhotoBeforeDelete.equals("default.jpg")) {
                 storageService.delete(namePhotoBeforeDelete);
             }
 
             student.setImagePath(fileName);
             Student savedStudent = studentRepository.save(student);
 
-            // Recuperar el estudiante de la base de datos para verificar si la imagen se asignó correctamente
-            Student verifyStudent = studentRepository.findById(id).orElse(null);
-            if (verifyStudent != null) {
-                String imagePath = verifyStudent.getImagePath();
-                if (imagePath != null && imagePath.equals(fileName)) {
-                    System.out.println("La imagen se asignó correctamente al estudiante");
-                } else {
-                    System.out.println("La imagen no se asignó correctamente al estudiante");
-                }
-            } else {
-                System.out.println("El estudiante no se encontró en la base de datos");
-            }
-
             response.put("message", "Image uploaded successfully");
             response.put("student", savedStudent);
         }
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        Student student = getStudentOrThrow(id);
+
+        String imageName = student.getImagePath();
+        if (imageName != null && !imageName.equals("default.jpg")) {
+            boolean isDeleted = storageService.delete(imageName);
+            if (!isDeleted) {
+                response.put("message", "Failed to delete image");
+                return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        studentRepository.deleteById(id);
+        response.put("message", "Student and image deleted successfully");
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }
