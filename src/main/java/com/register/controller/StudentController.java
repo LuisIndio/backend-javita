@@ -1,5 +1,7 @@
 package com.register.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.register.model.Student;
 import com.register.repository.StudentRepository;
 import com.register.storage.StorageService;
@@ -45,6 +47,20 @@ public class StudentController {
         }
         Student savedStudent = studentRepository.save(student);
         return new ResponseEntity<>(savedStudent, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
+        Student student = getStudentOrThrow(id);
+
+        student.setStudentName(studentDetails.getStudentName());
+        student.setLastName(studentDetails.getLastName());
+        student.setBirthDate(studentDetails.getBirthDate());
+        student.setRegistrationDate(studentDetails.getRegistrationDate());
+        student.setRegistrationEndDate(studentDetails.getRegistrationEndDate());
+
+        Student updatedStudent = studentRepository.save(student);
+        return new ResponseEntity<>(updatedStudent, HttpStatus.OK);
     }
 
     @GetMapping("/list/{id}")
