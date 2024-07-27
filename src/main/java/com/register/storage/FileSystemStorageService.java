@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,9 @@ public class FileSystemStorageService implements StorageService {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file.");
             }
-            filename = Objects.requireNonNull(file.getOriginalFilename());
+            // Generar un nuevo nombre de archivo único
+            String extension = Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf('.'));
+            filename = UUID.randomUUID().toString() + extension;
             Path destinationFile = this.rootLocation.resolve(
                             Paths.get(filename))
                     .normalize().toAbsolutePath();
@@ -113,6 +116,11 @@ public class FileSystemStorageService implements StorageService {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean exists(String filename) {
+        return Files.exists(load(filename));
     }
 
     @Override

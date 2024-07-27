@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Controller
 @RequestMapping("/file")
 public class FileUploadController {
@@ -33,7 +32,6 @@ public class FileUploadController {
 
     @GetMapping("/list")
     public ResponseEntity<List<String>> listUploadedFiles(Model model) throws IOException {
-
         List<String> files = storageService.loadAll().map(
                         path -> MvcUriComponentsBuilder.fromMethodName(FileUploadController.class,
                                 "serveFile", path.getFileName().toString()).build().toUri().toString())
@@ -45,10 +43,10 @@ public class FileUploadController {
     @GetMapping("/files/{filename:.+}")
     @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-
         Resource file = storageService.loadAsResource(filename);
-        if (file == null)
+        if (file == null) {
             return ResponseEntity.notFound().build();
+        }
 
         String contentType = determineContentType(file);
 
@@ -74,14 +72,12 @@ public class FileUploadController {
     @PostMapping("/create")
     public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file,
                                                    RedirectAttributes redirectAttributes) {
-
-        storageService.store(file);
-        return ResponseEntity.ok("You successfully uploaded " + file.getOriginalFilename() + "!");
+        String filename = storageService.store(file);
+        return ResponseEntity.ok("You successfully uploaded " + filename + "!");
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)
     public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
         return ResponseEntity.notFound().build();
     }
-
 }
